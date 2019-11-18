@@ -1,0 +1,4 @@
+*.dbf
+*.csv
+*.gz
+*.DS_Store
