@@ -24,6 +24,8 @@ sudo python setup.py install
 ```
 python data_processing.py rg_match_p10_01.dbf 
 ```
+# Downloads
+- Pollvote stats by block: https://statewidedatabase.org/pub/data/D10/reg_stats/p10/statewide_pollvote_stats_by_block.dbf
 
 # Plotting Resources/Ideas 
 - https://n8henrie.com/uploads/2017/11/plotting-us-census-data-with-python-and-geopandas.html
