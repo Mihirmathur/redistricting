@@ -9,7 +9,15 @@ from random import randint
 import cv2
 
 img = io.imread('../viz_population/la_county.png')
-# img = rgb2gray(img)
+
+
+def count_population(path):
+    img = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+    n_white_pix = np.sum(img != 255) 
+    return n_white_pix * 100
+
+print('population count')
+print(count_population('../viz_population/la_county.png'))
 
 radius = 100
 centers = [(570, 290, 100)]
@@ -38,7 +46,7 @@ for i in init_array:
                            coordinates='rc')
     snakes.append(snake)
     ax.plot(i[:, 1], i[:, 0], '--r', lw=3)
-    ax.plot(snake[:, 1], snake[:, 0], '-b', lw=3)
+    ax.fill(snake[:, 1], snake[:, 0], '-b', lw=3)
 
 # print(snakes[0])
 ax.imshow(img, cmap=plt.cm.gray)
@@ -48,3 +56,8 @@ ax.axis([0, img.shape[1], img.shape[0], 0])
 # cv2.fillPoly(img, pts=[snakes[0]], color=(15, 255, 255))
 # cv2.imshow("", img)
 plt.show()
+
+
+
+
+
