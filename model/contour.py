@@ -7,6 +7,9 @@ from skimage.segmentation import active_contour, quickshift
 from skimage.util import img_as_float
 from random import randint
 import cv2
+from shapely.geometry import Polygon
+from shapely.geometry import Point
+
 
 img = io.imread('../viz_population/la_county.png')
 
@@ -18,6 +21,9 @@ def count_population(path):
 
 print('population count')
 print(count_population('../viz_population/la_county.png'))
+
+
+
 
 radius = 100
 centers = [(570, 290, 100)]
@@ -46,7 +52,7 @@ for i in init_array:
                            coordinates='rc')
     snakes.append(snake)
     ax.plot(i[:, 1], i[:, 0], '--r', lw=3)
-    ax.fill(snake[:, 1], snake[:, 0], '-b', lw=3)
+    ax.plot(snake[:, 1], snake[:, 0], '-b', lw=3)
 
 # print(snakes[0])
 ax.imshow(img, cmap=plt.cm.gray)
@@ -55,8 +61,40 @@ ax.set_xticks([]), ax.set_yticks([])
 ax.axis([0, img.shape[1], img.shape[0], 0])
 # cv2.fillPoly(img, pts=[snakes[0]], color=(15, 255, 255))
 # cv2.imshow("", img)
-plt.show()
 
+
+pl = Polygon(snakes[0])
+
+minx, miny, maxx, maxy = pl.bounds
+minx, miny, maxx, maxy = int(minx), int(miny), int(maxx), int(maxy)
+box_patch = [[x,y] for x in range(minx,maxx+1) for y in range(miny,maxy+1)]
+pixels = []
+for pb in box_patch: 
+  pt = Point(pb[0],pb[1])
+  if(pl.contains(pt)):
+    pixels.append([int(pb[0]), int(pb[1])])
+
+# print(pixels)
+
+xcord, ycord = zip(*pixels)
+
+#NEED TO FIX THIS
+# for p in pixels :
+#     x = p[0]
+#     y = p[1]
+
+#     pix = (img[x,y][:-1])
+
+#     if (pix != [255,255,255]).all() :
+#         ax.plot(y, x, 'b')
+
+
+
+# img[1,2]
+
+# ax.plot(ycord, xcord, 'b')
+
+plt.show()
 
 
 
