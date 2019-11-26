@@ -1,6 +1,6 @@
 import os
 import logging
-
+import cv2
 import numpy as np
 from imageio import imread
 import matplotlib
@@ -15,7 +15,7 @@ if os.environ.get('DISPLAY', '') == '':
 
 # PATH_IMG_NODULE = '../exampleImages/mama07ORI.bmp'
 # PATH_IMG_STARFISH = '../exampleImages/seastar2.png'
-PATH_IMG_LA = '../exampleImages/LA.png'
+PATH_IMG_LA = '../exampleImages/la_county.png'
 # PATH_IMG_CAMERA = '../exampleImages/camera.png'
 # PATH_IMG_COINS = '../exampleImages/coins.png'
 # PATH_ARRAY_CONFOCAL = '../exampleImages/confocal.npy'
@@ -199,18 +199,37 @@ def rgb2gray(img):
 #                                              smoothing=1, threshold=0.69,
 #                                              balloon=-1, iter_callback=callback)
 
-
 def example_la():
     logging.info('Running: example_lakes (MorphACWE)...')
     
+    # mouse callback function
+    points = []
+    def note_point(event,x,y,flags,param):
+        if event == cv2.EVENT_LBUTTONDBLCLK:
+            points.append((y, x))
+
+    # Create a black image, a window and bind the function to window
+    imgcolor = imread(PATH_IMG_LA)
+    cv2.namedWindow('image')
+    cv2.setMouseCallback('image', note_point)
+
+    while(1):
+        cv2.imshow('image',imgcolor)
+        k = cv2.waitKey(20) & 0xFF
+        if k == ord('p'):
+            print(points)
+        elif k == ord('q'):
+            break
+    cv2.destroyAllWindows()
+
     # Load the image.
-    imgcolor = imread(PATH_IMG_LA)/255.0
+    imgcolor = imgcolor / 255
     img = rgb2gray(imgcolor)
     
     # MorphACWE does not need g(I)
     
     # Initialization of the level-set.
-    init_ls = ms.circle_level_set(img.shape, (80, 170), 25)
+    init_ls = ms.circle_level_set(img.shape, points[0], 25)
     
     # Callback for visual plotting
     callback = visual_callback_2d(imgcolor)
