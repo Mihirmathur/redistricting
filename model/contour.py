@@ -14,16 +14,6 @@ from shapely.geometry import Point
 img = io.imread('../viz_population/la_county.png')
 
 
-def count_population(path):
-    img = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
-    n_white_pix = np.sum(img != 255) 
-    return n_white_pix * 100
-
-print('population count')
-print(count_population('../viz_population/la_county.png'))
-
-
-
 
 radius = 100
 centers = [(570, 290, 100)]
@@ -63,38 +53,74 @@ ax.axis([0, img.shape[1], img.shape[0], 0])
 # cv2.imshow("", img)
 
 
-pl = Polygon(snakes[0])
-
-minx, miny, maxx, maxy = pl.bounds
-minx, miny, maxx, maxy = int(minx), int(miny), int(maxx), int(maxy)
-box_patch = [[x,y] for x in range(minx,maxx+1) for y in range(miny,maxy+1)]
-pixels = []
-for pb in box_patch: 
-  pt = Point(pb[0],pb[1])
-  if(pl.contains(pt)):
-    pixels.append([int(pb[0]), int(pb[1])])
-
-# print(pixels)
-
-xcord, ycord = zip(*pixels)
-
-#NEED TO FIX THIS
-# for p in pixels :
-#     x = p[0]
-#     y = p[1]
-
-#     pix = (img[x,y][:-1])
-
-#     if (pix != [255,255,255]).all() :
-#         ax.plot(y, x, 'b')
+def count_population(path):
+    img = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+    n_white_pix = np.sum(img != 255) 
+    return n_white_pix * 100
 
 
 
-# img[1,2]
 
-# ax.plot(ycord, xcord, 'b')
+def find_population_in_contour (snake):
 
-plt.show()
+    pl = Polygon(snake)
+
+    minx, miny, maxx, maxy = pl.bounds
+    minx, miny, maxx, maxy = int(minx), int(miny), int(maxx), int(maxy)
+    box_patch = [[x,y] for x in range(minx,maxx+1) for y in range(miny,maxy+1)]
+    pixels = []
+    for pb in box_patch: 
+      pt = Point(pb[0],pb[1])
+      if(pl.contains(pt)):
+        pixels.append([int(pb[0]), int(pb[1])])
+
+    xcord, ycord = zip(*pixels)
+
+    newl1 = []
+    newl2 = []
+
+    for p in pixels :
+        x = p[0]
+        y = p[1]
+
+        pix = (img[x,y][:-1])
+
+        if (pix != [255,255,255]).all() :
+            newl1.append(x)
+            newl2.append(y)
+
+    return (newl1, newl2)
+
+
+
+def score(snake, district_count):
+    (l1, l2) = find_population_in_contour(snake)
+    snake_count = len(l1)
+    population_count = count_population('../viz_population/la_county.png')
+    ideal_count = population_count / district_count
+
+    ratio1 = snake_count/ideal_count
+    ratio2 = ideal_count/snake_count
+
+    if (ratio1 == 1):
+        return ratio1
+
+    else:
+        return min(ratio1, ratio2)
+
+
+print(score(snakes[0], 8))
+
+
+# print('population count')
+# print(count_population('../viz_population/la_county.png'))
+
+# newl1 = find_population_in_contour(snakes)[0]
+# newl2 = find_population_in_contour(snakes)[1]
+
+# ax.plot(newl2, newl1, 'b')
+
+# plt.show()
 
 
 
