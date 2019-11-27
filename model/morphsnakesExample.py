@@ -1,10 +1,11 @@
 import os
 import logging
-
+import cv2
 import numpy as np
 from imageio import imread
 import matplotlib
 from matplotlib import pyplot as plt
+from skimage.segmentation import mark_boundaries, find_boundaries
 
 import morphsnakes as ms
 
@@ -15,7 +16,7 @@ if os.environ.get('DISPLAY', '') == '':
 
 # PATH_IMG_NODULE = '../exampleImages/mama07ORI.bmp'
 # PATH_IMG_STARFISH = '../exampleImages/seastar2.png'
-PATH_IMG_LA = '../exampleImages/LA.png'
+PATH_IMG_LA = '../exampleImages/la_county.png'
 # PATH_IMG_CAMERA = '../exampleImages/camera.png'
 # PATH_IMG_COINS = '../exampleImages/coins.png'
 # PATH_ARRAY_CONFOCAL = '../exampleImages/confocal.npy'
@@ -55,7 +56,7 @@ def visual_callback_2d(background, fig=None):
 
     ax2 = fig.add_subplot(1, 2, 2)
     ax_u = ax2.imshow(np.zeros_like(background), vmin=0, vmax=1)
-    plt.pause(0.001)
+    plt.pause(0.00001)
 
     def callback(levelset):
         
@@ -64,7 +65,7 @@ def visual_callback_2d(background, fig=None):
         ax1.contour(levelset, [0.5], colors='r')
         ax_u.set_data(levelset)
         fig.canvas.draw()
-        plt.pause(0.001)
+        plt.pause(0.00001)
 
     return callback
 
@@ -107,7 +108,7 @@ def visual_callback_3d(fig=None, plot_each=1):
         fig = plt.figure()
     fig.clf()
     ax = fig.add_subplot(111, projection='3d')
-    plt.pause(0.001)
+    plt.pause(0.00001)
     
     counter = [-1]
 
@@ -123,7 +124,7 @@ def visual_callback_3d(fig=None, plot_each=1):
         coords, triangles = mcubes.marching_cubes(levelset, 0.5)
         ax.plot_trisurf(coords[:, 0], coords[:, 1], coords[:, 2],
                         triangles=triangles)
-        plt.pause(0.1)
+        plt.pause(0.00001)
 
     return callback
 
@@ -199,28 +200,54 @@ def rgb2gray(img):
 #                                              smoothing=1, threshold=0.69,
 #                                              balloon=-1, iter_callback=callback)
 
-
 def example_la():
     logging.info('Running: example_lakes (MorphACWE)...')
     
+    # mouse callback function
+    points = []
+    def note_point(event,x,y,flags,param):
+        if event == cv2.EVENT_LBUTTONDBLCLK:
+            points.append((y, x))
+
+    # Create a black image, a window and bind the function to window
+    imgcolor = imread(PATH_IMG_LA)
+    cv2.namedWindow('image')
+    cv2.setMouseCallback('image', note_point)
+
+    while(1):
+        cv2.imshow('image',imgcolor)
+        k = cv2.waitKey(20) & 0xFF
+        if k == ord('p'):
+            print(points)
+        elif k == ord('q'):
+            break
+    cv2.destroyAllWindows()
+
     # Load the image.
-    imgcolor = imread(PATH_IMG_LA)/255.0
+    imgcolor = imgcolor / 255
     img = rgb2gray(imgcolor)
     
     # MorphACWE does not need g(I)
     
     # Initialization of the level-set.
-    init_ls = ms.circle_level_set(img.shape, (80, 170), 25)
-    
-    # Callback for visual plotting
-    callback = visual_callback_2d(imgcolor)
+    for point in points:
+        init_ls = ms.circle_level_set(img.shape, point, 25)
+        
+        # Callback for visual plotting
+        callback = visual_callback_2d(imgcolor)
 
-    # Morphological Chan-Vese (or ACWE)
-    ms.morphological_chan_vese(img, iterations=200,
-                               init_level_set=init_ls,
-                               smoothing=3, lambda1=1, lambda2=1,
-                               iter_callback=callback)
+        # Morphological Chan-Vese (or ACWE)
+        r = ms.morphological_chan_vese(img, iterations=100,
+                                   init_level_set=init_ls,
+                                   smoothing=3, lambda1=1, lambda2=1,
+                                   iter_callback=callback)
+        
+        bounder = find_boundaries(r, mode='thick').astype(np.uint8)
+        imgcolor[bounder!=0] = (255, 0, 0, 1)
 
+        r = 1 - r
+        imgmod = cv2.bitwise_and(imgcolor, imgcolor, mask=r)
+        img = rgb2gray(imgmod)
 
 # def example_camera():
 #     """

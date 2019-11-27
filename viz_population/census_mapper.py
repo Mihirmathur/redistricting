@@ -192,10 +192,11 @@ def gen_count_dot_density_map(county, pts_per_person = 300,
     ax.set_title(name, size=15)
     
     #annotate the dot per person ratio
-    ax.annotate("1 dot = {} people".format(pts_per_person), 
-                xy=(.5, .97), xycoords='axes fraction', horizontalalignment='center',
-                fontsize = 12)
-        
+    # ax.annotate("1 dot = {} people".format(pts_per_person), 
+                # xy=(.5, .97), xycoords='axes fraction', horizontalalignment='center',
+                # fontsize = 12)
+    
+    print(dems)
     #loop each race category and generate points for each within each block group 
     list_of_point_categories=[]
     for field in ['White','Hispanic','Black','Asian','Other']:           
@@ -205,6 +206,172 @@ def gen_count_dot_density_map(county, pts_per_person = 300,
         list_of_point_categories.append(ps)
     all_points=gpd.GeoDataFrame(pd.concat(list_of_point_categories))
     all_points.plot(ax=ax, markersize=2, alpha=dot_transparency, 
-              column='field', categorical=True, legend=legend)
+              column='field', categorical=True)# , legend=legend)
+
+    return ax
+
+def gen_dem_rep_density_map(county, pts_per_person = 300, 
+                              epsg = 2163, seed=10,
+                              dot_transparency=0.4, figsize=(12,12), 
+                              ax=None, legend=False):
+    """
+    Wraps previous functions and generates population dot density maps for a specified county by race
+    
+    """
+    #read in fips to county name relationship file
+    fips = pd.read_csv('https://www2.census.gov/geo/docs/reference/codes/files/national_county.txt',
+                   header=None, dtype={1:np.object, 2:np.object})
+    fips['name']=fips[3]+', '+fips[0]
+    fips['fips']=fips[1]+fips[2]
+    
+    #get name from fips if fips specified
+    if county.isdigit():
+        lookup = fips.set_index('fips')['name']
+        county_fips = county
+        name = lookup[county_fips]
+    #get fips from name if name specified
+    else:
+        lookup = fips.set_index('name')['fips']
+        name = county
+        county_fips = lookup[name]
+    
+    
+    #get geodataframe of block group shapefile
+    bgfile_name = 'http://www2.census.gov/geo/tiger/GENZ2015/shp/cb_2015_{}_bg_500k.zip'.format(county_fips[:2])
+    bg_geo = zip_shp_to_gdf(bgfile_name)
+    
+    #subset to those that are in the county and project it to the CRS
+    bg_geo=bg_geo[bg_geo['GEOID'].str[:5]==county_fips].to_crs(epsg=epsg).set_index("GEOID")['geometry']
+    
+    #specify variable list and variable names for the census api function
+    varlist = ['B00001_001E']
+    names = ['Population']
+    
+    #read in block group level census variables
+    dems = get_census_variables(2015, 'acs5', 'block group', 
+                                {'county':county_fips[2:], 
+                                 'state':county_fips[:2]}, varlist, names)
+    #Calculate other as sum of those not in the 4 most populated race categories
+    # dems['Other']=dems[['AI/AN', 'NH/PI','Other_', 'Two Plus']].sum(1)
+    
+    #Calculate county boundaries as the union of block groups 
+    union = gpd.GeoSeries(bg_geo.unary_union)
+    dems = dems.dropna()
+    
+    #if axes object is specified, plot to this axis, otherwise create a new one
+    if ax:
+        union.plot(color='white', figsize=figsize, ax=ax)
+    else:
+        ax = union.plot(color='white', figsize=figsize)
+   
+    #set aspect equal and add title if specified
+    ax.set(aspect='equal', xticks=[], yticks=[])
+    #set title as county name
+    # ax.set_title(name, size=15)
+    
+    #annotate the dot per person ratio
+#     ax.annotate("1 dot = {} people".format(pts_per_person), 
+#                 xy=(.5, .97), xycoords='axes fraction', horizontalalignment='center',
+#                 fontsize = 12)
+        
+    df = pd.read_csv('../statewide_pollvote_stats_by_block.csv')
+    df = df[['GEOID10', 'DEM', 'REP']]
+    df['GEOID10'] = df['GEOID10'].apply(lambda x: '0' + str(x)[:-5])
+    df = df.groupby(['GEOID10']).sum()
+    df.index.names = ['FIPS']
+    df = df.drop(df.index[[0]])
+    
+    dems = dems.join(df).dropna()
+    del dems['Population']
+
+    #loop each race category and generate points for each within each block group 
+    list_of_point_categories=[]
+    for field in ['DEM', 'REP']:           
+        ps=gpd.GeoDataFrame(gen_points_in_gdf_polys(geometry = bg_geo, values=dems[field],
+                             points_per_value = pts_per_person, seed=seed))
+        ps['field']=field
+        list_of_point_categories.append(ps)
+        
+    all_points=gpd.GeoDataFrame(pd.concat(list_of_point_categories))
+    all_points.plot(ax=ax, markersize=2, alpha=dot_transparency, 
+              column='field', categorical=True, cmap='jet', legend=legend)
+
+    return ax
+
+def gen_pop_density_map(county, pts_per_person = 300, 
+                              epsg = 2163, seed=10,
+                              dot_transparency=0.4, figsize=(12,12), 
+                              ax=None, legend=False):
+    """
+    Wraps previous functions and generates population dot density maps for a specified county by race
+    
+    """
+    #read in fips to county name relationship file
+    fips = pd.read_csv('https://www2.census.gov/geo/docs/reference/codes/files/national_county.txt',
+                   header=None, dtype={1:np.object, 2:np.object})
+    fips['name']=fips[3]+', '+fips[0]
+    fips['fips']=fips[1]+fips[2]
+    
+    #get name from fips if fips specified
+    if county.isdigit():
+        lookup = fips.set_index('fips')['name']
+        county_fips = county
+        name = lookup[county_fips]
+    #get fips from name if name specified
+    else:
+        lookup = fips.set_index('name')['fips']
+        name = county
+        county_fips = lookup[name]
+    
+    
+    #get geodataframe of block group shapefile
+    bgfile_name = 'http://www2.census.gov/geo/tiger/GENZ2015/shp/cb_2015_{}_bg_500k.zip'.format(county_fips[:2])
+    bg_geo = zip_shp_to_gdf(bgfile_name)
+    
+    #subset to those that are in the county and project it to the CRS
+    bg_geo=bg_geo[bg_geo['GEOID'].str[:5]==county_fips].to_crs(epsg=epsg).set_index("GEOID")['geometry']
+    
+    #specify variable list and variable names for the census api function
+    varlist = ['B00001_001E']
+    names = ['Population']
+    
+    #read in block group level census variables
+    dems = get_census_variables(2015, 'acs5', 'block group', 
+                                {'county':county_fips[2:], 
+                                 'state':county_fips[:2]}, varlist, names)
+    #Calculate other as sum of those not in the 4 most populated race categories
+    # dems['Other']=dems[['AI/AN', 'NH/PI','Other_', 'Two Plus']].sum(1)
+    
+    #Calculate county boundaries as the union of block groups 
+    union = gpd.GeoSeries(bg_geo.unary_union)
+    dems = dems.dropna()
+    
+    #if axes object is specified, plot to this axis, otherwise create a new one
+    if ax:
+        union.plot(color='white', figsize=figsize, ax=ax)
+    else:
+        ax = union.plot(color='white', figsize=figsize)
+   
+    #set aspect equal and add title if specified
+    ax.set(aspect='equal', xticks=[], yticks=[])
+    #set title as county name
+    ax.set_title(name, size=15)
+    
+    #annotate the dot per person ratio
+    # ax.annotate("1 dot = {} people".format(pts_per_person), 
+                # xy=(.5, .97), xycoords='axes fraction', horizontalalignment='center',
+                # fontsize = 12)
+        
+    #loop each race category and generate points for each within each block group 
+    list_of_point_categories=[]
+    for field in ['Population']:           
+        ps=gpd.GeoDataFrame(gen_points_in_gdf_polys(geometry = bg_geo, values=dems[field],
+                             points_per_value = pts_per_person, seed=seed))
+        ps['field']=field
+        list_of_point_categories.append(ps)
+        
+    all_points=gpd.GeoDataFrame(pd.concat(list_of_point_categories))
+    all_points.plot(ax=ax, markersize=2, alpha=dot_transparency, 
+              column='field', categorical=True)# , legend=legend)
 
     return ax
