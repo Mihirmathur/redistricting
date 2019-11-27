@@ -22,4 +22,8 @@ zipcode_gdf = gpd.read_file(f"zip://{zipcode_file}")
 states_gdf = gpd.read_file(f"zip://{states_file}")
 
 print(zipcode_gdf.head())
-zipcode_gdf.plot()
+# zipcode_gdf.plot()
+
+
+pt = zipcode_gdf.iloc[[0], :].plot()
+pt.show()
