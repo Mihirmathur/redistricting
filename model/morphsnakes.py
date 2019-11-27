@@ -343,6 +343,8 @@ def morphological_chan_vese(image, iterations, init_level_set='checkerboard',
 
     iter_callback(u, counter)
 
+    res = 0
+
     for _ in range(iterations):
 
         # inside = u > 0
@@ -353,6 +355,9 @@ def morphological_chan_vese(image, iterations, init_level_set='checkerboard',
         # Image attachment
         du = np.gradient(u)
         abs_du = np.abs(du).sum(0)
+
+        # abs_du = (1-res)*abs_du
+
         aux = abs_du * (lambda1 * (image - c1)**2 - lambda2 * (image - c0)**2)
 
         u[aux < 0] = 1
@@ -362,14 +367,14 @@ def morphological_chan_vese(image, iterations, init_level_set='checkerboard',
         for _ in range(smoothing):
             u = _curvop(u)
 
-        res = iter_callback(u, counter)
+        res = iter_callback(u, counter, res)
 
         if res > 0.97:
-            break
+            return (u, res)
 
         counter += 1
 
-    return u
+    return (u, res)
 
 
 def morphological_geodesic_active_contour(gimage, iterations,

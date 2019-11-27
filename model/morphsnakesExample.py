@@ -23,8 +23,9 @@ if os.environ.get('DISPLAY', '') == '':
 
 
 PATH_IMG_LA = '../exampleImages/la_county.png'
-PAUSE_TIME = 0.00001
+PAUSE_TIME = 0.000001
 
+num_districts = 8
 
 # Load the image.
 imgcolor = imread(PATH_IMG_LA)
@@ -58,13 +59,7 @@ def score(levelset, district_count, population):
     ideal_count = population / district_count
 
     ratio1 = district_population/ideal_count
-    ratio2 = ideal_count/district_population
-
-    if (ratio1 == 1):
-        return ratio1
-
-    else:
-        return min(ratio1, ratio2)
+    return ratio1
 
 
 def visual_callback_2d(background, fig=None):
@@ -104,11 +99,11 @@ def visual_callback_2d(background, fig=None):
 
     plt.pause(PAUSE_TIME)
 
-    def callback(levelset, counter):
+    def callback(levelset, counter, prevscore=0):
         # print(levelset.shape)
-        if counter % 10 == 0:
-            cur_score = score(levelset, 8, population_count)
-            print(cur_score)
+        if counter % 5 == 0:
+            cur_score = score(levelset, num_districts, population_count)
+            print('Districts: ', num_districts, ', Score:', cur_score)
 
             if (cur_score > 0.97):
                 print('Done with contour, score=', cur_score)
@@ -122,7 +117,7 @@ def visual_callback_2d(background, fig=None):
         fig.canvas.draw()
 
         plt.pause(PAUSE_TIME)
-        return 0
+        return prevscore
 
     return callback
 
@@ -194,11 +189,13 @@ def visual_callback_2d(background, fig=None):
 #                                              balloon=-1, iter_callback=callback)
 
 def example_la():
-    logging.info('Running: example_lakes (MorphACWE)...') 
+    logging.info('Running: example_lakes (MorphACWE)...')
     global img
+    global num_districts
     # mouse callback function
     points = []
-    def note_point(event,x,y,flags,param):
+
+    def note_point(event, x, y, flags, param):
         if event == cv2.EVENT_LBUTTONDBLCLK:
             points.append((y, x))
 
@@ -207,36 +204,48 @@ def example_la():
     cv2.setMouseCallback('image', note_point)
 
     while(1):
-        cv2.imshow('image',imgcolor)
+        cv2.imshow('image', imgcolor)
         k = cv2.waitKey(20) & 0xFF
         if k == ord('p'):
             print(points)
         elif k == ord('q'):
             break
     cv2.destroyAllWindows()
-    
+
+    num_districts = len(points)
+
     # MorphACWE does not need g(I)
-    
+    all_scores = []
     # Initialization of the level-set.
     for point in points:
         init_ls = ms.circle_level_set(img.shape, point, 40)
-        
+
         # Callback for visual plotting
         callback = visual_callback_2d(imgcolor)
 
         # Morphological Chan-Vese (or ACWE)
-        r = ms.morphological_chan_vese(img, iterations=100,
-                                   init_level_set=init_ls,
-                                   smoothing=3, lambda1=1, lambda2=1,
-                                   iter_callback=callback)
-        
+        r, score = ms.morphological_chan_vese(img, iterations=100,
+                                              init_level_set=init_ls,
+                                              smoothing=3, lambda1=1, lambda2=1,
+                                              iter_callback=callback)
+
+        all_scores.append(score)
         bounder = find_boundaries(r, mode='thick').astype(np.uint8)
-        imgcolor[bounder!=0] = (255, 0, 0, 1)
+        imgcolor[bounder != 0] = (255, 0, 0, 1)
 
         r = 1 - r
         imgmod = cv2.bitwise_and(imgcolor, imgcolor, mask=r)
         img = rgb2gray(imgmod)
 
+    print('Total Score:', all_scores)
+    total_score = 0
+    for score in all_scores:
+        if score > 1:
+            total_score += (1 - (score - 1))
+        else:
+            total_score += score
+
+    print(total_score)
 
     # mouse callback function
     # points = []
@@ -244,7 +253,6 @@ def example_la():
     # def note_point(event, x, y, flags, param):
     #     if event == cv2.EVENT_LBUTTONDBLCLK:
     #         points.append((y, x))
-
 
     # # Create a black image, a window and bind the function to window
     # cv2.namedWindow('image')
