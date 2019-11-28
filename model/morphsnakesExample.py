@@ -22,7 +22,7 @@ if os.environ.get('DISPLAY', '') == '':
     # matplotlib.use('Agg')
 
 
-PATH_IMG_LA = '../exampleImages/la_county.png'
+PATH_IMG_LA = '../exampleImages/LA_clear.png'
 PAUSE_TIME = 0.000001
 
 num_districts = 8
@@ -237,7 +237,7 @@ def example_la():
         imgmod = cv2.bitwise_and(imgcolor, imgcolor, mask=r)
         img = rgb2gray(imgmod)
 
-    print('Total Score:', all_scores)
+    print('All Scores:', all_scores)
     total_score = 0
     for score in all_scores:
         if score > 1:
@@ -245,7 +245,7 @@ def example_la():
         else:
             total_score += score
 
-    print(total_score)
+    print('Total Score:', total_score)
 
     # mouse callback function
     # points = []

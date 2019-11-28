@@ -3,3 +3,4 @@
 *.gz
 *.DS_Store
 *.zip
+*.pyc
