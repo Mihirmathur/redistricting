@@ -9,6 +9,7 @@ from skimage.segmentation import mark_boundaries, find_boundaries
 from contour import count_population
 import morphsnakes as ms
 from threading import Thread
+from clustering import * 
 
 
 def rgb2gray(img):
@@ -193,24 +194,24 @@ def example_la():
     global img
     global num_districts
     # mouse callback function
-    points = []
+    points = find_centers(PATH_IMG_LA)
 
-    def note_point(event, x, y, flags, param):
-        if event == cv2.EVENT_LBUTTONDBLCLK:
-            points.append((y, x))
+    # def note_point(event, x, y, flags, param):
+    #     if event == cv2.EVENT_LBUTTONDBLCLK:
+    #         points.append((y, x))
 
-    # Create a black image, a window and bind the function to window
-    cv2.namedWindow('image')
-    cv2.setMouseCallback('image', note_point)
+    # # Create a black image, a window and bind the function to window
+    # cv2.namedWindow('image')
+    # cv2.setMouseCallback('image', note_point)
 
-    while(1):
-        cv2.imshow('image', imgcolor)
-        k = cv2.waitKey(20) & 0xFF
-        if k == ord('p'):
-            print(points)
-        elif k == ord('q'):
-            break
-    cv2.destroyAllWindows()
+    # while(1):
+    #     cv2.imshow('image', imgcolor)
+    #     k = cv2.waitKey(20) & 0xFF
+    #     if k == ord('p'):
+    #         print(points)
+    #     elif k == ord('q'):
+    #         break
+    # cv2.destroyAllWindows()
 
     num_districts = len(points)
 
@@ -218,7 +219,7 @@ def example_la():
     all_scores = []
     # Initialization of the level-set.
     for point in points:
-        init_ls = ms.circle_level_set(img.shape, point, 40)
+        init_ls = ms.circle_level_set(img.shape, point, 20)
 
         # Callback for visual plotting
         callback = visual_callback_2d(imgcolor)

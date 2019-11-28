@@ -4,29 +4,27 @@ from skimage import io
 from sklearn.cluster import KMeans
 import cv2
 
-PATH = '../exampleImages/LA_clear.png'
+def find_centers(PATH):
+
+    def getColor(cluster):
+        if cluster == 0:
+            return (0, 123, 0)
+        if cluster == 1:
+            return (0, 0, 123)
+        if cluster == 2:
+            return (123, 0, 0)
+        if cluster == 3:
+            return (220, 0, 123)
+        if cluster == 4:
+            return (123, 220, 0)
+        if cluster == 5:
+            return (50, 0, 123)
+        if cluster == 6:
+            return (20, 100, 50)
+        else:
+            return (23, 153, 123)
 
 
-def getColor(cluster):
-    if cluster == 0:
-        return (0, 123, 0)
-    if cluster == 1:
-        return (0, 0, 123)
-    if cluster == 2:
-        return (123, 0, 0)
-    if cluster == 3:
-        return (220, 0, 123)
-    if cluster == 4:
-        return (123, 220, 0)
-    if cluster == 5:
-        return (50, 0, 123)
-    if cluster == 6:
-        return (20, 100, 50)
-    else:
-        return (23, 153, 123)
-
-
-if __name__ == '__main__':
     n = 8
     img = cv2.imread(PATH, cv2.IMREAD_GRAYSCALE)
     pts = np.array([[0, 0]])
@@ -37,15 +35,17 @@ if __name__ == '__main__':
 
     clf = KMeans(n_clusters=n, random_state=0)
     clf.fit(pts)
-    print('Num clusters=', n)
-    print('Cluster centers:', clf.cluster_centers_)
+    return clf.cluster_centers_
+    # clf.fit(pts)
+    # print('Num clusters=', n)
+    # print('Cluster centers:', clf.cluster_centers_)
 
-    img = cv2.imread(PATH)
-    for p, l in zip(pts, clf.labels_):
-        img[p[0]][p[1]] = getColor(l)
+    # img = cv2.imread(PATH)
+    # for p, l in zip(pts, clf.labels_):
+    #     img[p[0]][p[1]] = getColor(l)
 
-    fig, ax = plt.subplots(figsize=(7, 7))
-    ax.imshow(img)
-    ax.set_xticks([]), ax.set_yticks([])
-    ax.axis([0, img.shape[1], img.shape[0], 0])
-    plt.show()
+    # fig, ax = plt.subplots(figsize=(7, 7))
+    # ax.imshow(img)
+    # ax.set_xticks([]), ax.set_yticks([])
+    # ax.axis([0, img.shape[1], img.shape[0], 0])
+    # plt.show()
