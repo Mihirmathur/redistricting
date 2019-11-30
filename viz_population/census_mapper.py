@@ -353,9 +353,9 @@ def gen_pop_density_map(county, pts_per_person = 300,
         ax = union.plot(color='white', figsize=figsize)
    
     #set aspect equal and add title if specified
-    ax.set(aspect='equal', xticks=[], yticks=[])
+    ax.set(xticks=[], yticks=[])
     #set title as county name
-    ax.set_title(name, size=15)
+    #ax.set_title(name, size=15)
     
     #annotate the dot per person ratio
     # ax.annotate("1 dot = {} people".format(pts_per_person), 

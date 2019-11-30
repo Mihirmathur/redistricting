@@ -23,7 +23,7 @@ if os.environ.get('DISPLAY', '') == '':
     # matplotlib.use('Agg')
 
 
-PATH_IMG_LA = '../exampleImages/LA_clear.png'
+PATH_IMG_LA = '../exampleImages/la_county_small.png'
 PAUSE_TIME = 0.000001
 
 num_districts = 8
@@ -92,17 +92,17 @@ def visual_callback_2d(background, fig=None):
     if fig is None:
         fig = plt.figure()
     fig.clf()
-    ax1 = fig.add_subplot(1, 2, 1)
+    ax1 = fig.add_subplot(111)
     ax1.imshow(background, cmap=plt.cm.gray)
 
-    ax2 = fig.add_subplot(1, 2, 2)
-    ax_u = ax2.imshow(np.zeros_like(background), vmin=0, vmax=1)
+    #ax2 = fig.add_subplot(1, 2, 2)
+    #ax_u = ax2.imshow(np.zeros_like(background), vmin=0, vmax=1)
 
     plt.pause(PAUSE_TIME)
 
     def callback(levelset, counter, prevscore=0):
         # print(levelset.shape)
-        if counter % 5 == 0:
+        if counter % 15 == 0:
             cur_score = score(levelset, num_districts, population_count)
             print('Districts: ', num_districts, ', Score:', cur_score)
 
@@ -114,9 +114,9 @@ def visual_callback_2d(background, fig=None):
             del ax1.collections[0]
 
         ax1.contour(levelset, [0.5], colors='r')
-        ax_u.set_data(levelset)
+        #ax_u.set_data(levelset)
         fig.canvas.draw()
-
+        
         plt.pause(PAUSE_TIME)
         return prevscore
 
@@ -219,7 +219,7 @@ def example_la():
     all_scores = []
     # Initialization of the level-set.
     for point in points:
-        init_ls = ms.circle_level_set(img.shape, point, 20)
+        init_ls = ms.circle_level_set(img.shape, point, 40)
 
         # Callback for visual plotting
         callback = visual_callback_2d(imgcolor)
@@ -232,7 +232,7 @@ def example_la():
 
         all_scores.append(score)
         bounder = find_boundaries(r, mode='thick').astype(np.uint8)
-        imgcolor[bounder != 0] = (255, 0, 0, 1)
+        imgcolor[bounder!=0] = (255, 0, 0, 1)
 
         r = 1 - r
         imgmod = cv2.bitwise_and(imgcolor, imgcolor, mask=r)
