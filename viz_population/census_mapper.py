@@ -122,7 +122,7 @@ def get_census_variables(year, dataset, geography, area, variables, variable_lab
 def gen_count_dot_density_map(county, pts_per_person = 300, 
                               epsg = 2163, seed=10,
                               dot_transparency=0.4, figsize=(12,12), 
-                              ax=None, legend=True):
+                              ax=None, legend=False):
     """
     Wraps previous functions and generates population dot density maps for a specified county by race
     
@@ -196,7 +196,6 @@ def gen_count_dot_density_map(county, pts_per_person = 300,
                 # xy=(.5, .97), xycoords='axes fraction', horizontalalignment='center',
                 # fontsize = 12)
     
-    print(dems)
     #loop each race category and generate points for each within each block group 
     list_of_point_categories=[]
     for field in ['White','Hispanic','Black','Asian','Other']:           
@@ -206,7 +205,7 @@ def gen_count_dot_density_map(county, pts_per_person = 300,
         list_of_point_categories.append(ps)
     all_points=gpd.GeoDataFrame(pd.concat(list_of_point_categories))
     all_points.plot(ax=ax, markersize=2, alpha=dot_transparency, 
-              column='field', categorical=True)# , legend=legend)
+              column='field', categorical=True, legend=legend)
 
     return ax
 
@@ -274,7 +273,7 @@ def gen_dem_rep_density_map(county, pts_per_person = 300,
 #                 xy=(.5, .97), xycoords='axes fraction', horizontalalignment='center',
 #                 fontsize = 12)
         
-    df = pd.read_csv('../statewide_pollvote_stats_by_block.csv')
+    df = pd.read_csv('statewide_pollvote_stats_by_block.csv')
     df = df[['GEOID10', 'DEM', 'REP']]
     df['GEOID10'] = df['GEOID10'].apply(lambda x: '0' + str(x)[:-5])
     df = df.groupby(['GEOID10']).sum()
@@ -372,6 +371,6 @@ def gen_pop_density_map(county, pts_per_person = 300,
         
     all_points=gpd.GeoDataFrame(pd.concat(list_of_point_categories))
     all_points.plot(ax=ax, markersize=2, alpha=dot_transparency, 
-              column='field', categorical=True)# , legend=legend)
+              column='field', categorical=True, legend=legend)
 
     return ax

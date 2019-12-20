@@ -4,7 +4,7 @@ from skimage import io
 from sklearn.cluster import KMeans
 import cv2
 
-def find_centers(PATH):
+def find_centers(PATH, viz=False):
 
     def getColor(cluster):
         if cluster == 0:
@@ -35,17 +35,22 @@ def find_centers(PATH):
 
     clf = KMeans(n_clusters=n, random_state=0)
     clf.fit(pts)
+    
+    if viz:
+        clf.fit(pts)
+        print('Num clusters=', n)
+        print('Cluster centers:', clf.cluster_centers_)
+
+        img = cv2.imread(PATH)
+        for p, l in zip(pts, clf.labels_):
+            img[p[0]][p[1]] = getColor(l)
+            
+        cv2.imwrite('result_KMeans.jpg', img)
+
+        fig, ax = plt.subplots(figsize=(7, 7))
+        ax.imshow(img)
+        ax.set_xticks([]), ax.set_yticks([])
+        ax.axis([0, img.shape[1], img.shape[0], 0])
+        plt.show()
+    
     return clf.cluster_centers_
-    # clf.fit(pts)
-    # print('Num clusters=', n)
-    # print('Cluster centers:', clf.cluster_centers_)
-
-    # img = cv2.imread(PATH)
-    # for p, l in zip(pts, clf.labels_):
-    #     img[p[0]][p[1]] = getColor(l)
-
-    # fig, ax = plt.subplots(figsize=(7, 7))
-    # ax.imshow(img)
-    # ax.set_xticks([]), ax.set_yticks([])
-    # ax.axis([0, img.shape[1], img.shape[0], 0])
-    # plt.show()
